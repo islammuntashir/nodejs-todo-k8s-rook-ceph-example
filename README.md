@@ -1,6 +1,9 @@
 # nodejs-todo-k8s-example
 This git is initated to cover a challenge
 
+STEP 1
+===========================================================================
+
 This app is simple todo app. made through the concept of this articale
 https://medium.com/@atingenkay/creating-a-todo-app-with-node-js-express-8fa51f39b16f
 
@@ -10,19 +13,42 @@ I have added another data saving and retriving layer upon it. Now by browsing lo
   
 I have also integrate simple test case. To run that test case please run "npm test"
 
+STEP 2
+============================================================================
+
 Now Creating docker file using following content
 
 FROM node:10-alpine
+
 RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+
 WORKDIR /home/node/app
+
 COPY package*.json ./
+
 RUN npm config set registry http://registry.npmjs.org/
+
 RUN npm install
+
 COPY . .
+
 COPY --chown=node:node . .
+
 USER node
+
 EXPOSE 8080
+
 CMD [ "node", "index.js" ]
 
+STEP 3
+============================================================================
 
+Create Docker image using following command
+
+  docker build -t muntashir/node-todo-app . 
+
+push image to dockerhub. first login with username then push the image
+
+  docker login -u muntashir
+  docker push muntashir/node-todo-app
 
