@@ -54,46 +54,100 @@ The storage class looks like this
 
 Now Change value.yaml file. and update storage class, service , images etc 
 
-replicaCount: 3
+    replicaCount: 3
 
-image:
-  repository: muntashir/node-todo-app
-  tag: latest
-  pullPolicy: Always
-fullname: "a"
-nameOverride: ""
-fullnameOverride: ""
+    image:
+      repository: muntashir/node-todo-app
+      tag: latest
+      pullPolicy: Always
+    fullname: "a"
+    nameOverride: ""
+    fullnameOverride: ""
 
-service:
-  type: NodePort
-  port: 4040
-  targetPort: 4040
-  nodePort: 30100
+    service:
+      type: NodePort
+      port: 4040
+      targetPort: 4040
+      nodePort: 30100
   
-ingress:
-  enabled: false
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  paths: []
-  hosts:
-    - chart-example.local
-  tls: []
-persistentVolume:
-  enabled: true
-  path: /app/data
-  storageClass: "rook-ceph-block"
-  accessModes:
-    - ReadWriteOnce
-  size: 10Gi
-  annotations: {}
-resources: {}
+    ingress:
+      enabled: false
+      annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+      paths: []
+      hosts:
+      - chart-example.local
+      tls: []
+    persistentVolume:
+      enabled: true
+      path: /app/data
+      storageClass: "rook-ceph-block"
+      accessModes:
+      - ReadWriteOnce
+      size: 10Gi
+      annotations: {}
+    resources: {}
 
-nodeSelector: {}
+    nodeSelector: {}
 
-tolerations: []
+    tolerations: []
 
-affinity: {}
+    affinity: {}
 
+Here I have defined storageClass to rook-ceph-block as per my cloud-native orchestrator
 
 Then Create Stateful Set 
+
+    apiVersion: apps/v1 
+    kind: StatefulSet
+    metadata:
+      name: {{ include "nodeappexample.fullname" . }}
+      labels:
+        app.kubernetes.io/name: {{ include "nodeappexample.name" . }}
+        helm.sh/chart: {{ include "nodeappexample.chart" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+    
+    spec:
+      serviceName: "nginx"
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: {{ include "nodeappexample.name" . }}
+          app.kubernetes.io/instance: {{ .Release.Name }}
+      replicas: {{ .Values.replicaCount }}
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ include "nodeappexample.name" . }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+      spec:
+        containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          - name: http
+            containerPort: 4040
+            protocol: TCP
+          volumeMounts:
+          - name: data
+            mountPath: /app/data
+        
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+    volumeClaimTemplates:
+    - metadata:
+      name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: rook-ceph-block
