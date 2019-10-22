@@ -45,7 +45,9 @@ spec:
   - metadata:
       name: data
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes:
+      - ReadWriteOnce
+      - ReadOnlyMany
       resources:
         requests:
           storage: 1Gi

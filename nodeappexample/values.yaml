@@ -36,6 +36,7 @@ persistentVolume:
   storageClass: "rook-ceph-block"
   accessModes:
     - ReadWriteOnce
+    - ReadOnlyMany
   size: 10Gi
   annotations: {}
 resources: {}
