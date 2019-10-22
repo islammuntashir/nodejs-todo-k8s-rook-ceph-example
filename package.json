@@ -4,7 +4,8 @@
   "description": "A simple to-do list application demo",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./index.js",
+    "test": "./node_modules/.bin/mocha"
   },
   "author": "Forethought",
   "license": "ISC",
@@ -12,5 +13,9 @@
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
     "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "mocha": "^5.0.5",
+    "supertest": "^3.0.0"
   }
 }

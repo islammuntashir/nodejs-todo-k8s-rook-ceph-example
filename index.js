@@ -87,3 +87,5 @@ var saveNotes = (notes) => {
 app.listen(4040, function () {
   console.log('Testing app listening on port 4040')
 });
+
+module.exports = app
