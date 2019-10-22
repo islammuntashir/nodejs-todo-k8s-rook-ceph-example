@@ -1,14 +1,13 @@
 FROM node:10-alpine
-RUN mkdir -p /home/node/app/node_modules
-RUN chown -R node:node /home/node/app && \
-    chmod -R 777 /home/node/app
-USER node
-WORKDIR /home/node/app
+RUN mkdir -p /app/node_modules
+
+#USER node
+WORKDIR /app
 COPY package*.json ./
 RUN npm config set registry http://registry.npmjs.org/
 RUN npm install
 COPY . .
-COPY --chown=node:node . .
-USER node
-EXPOSE 8080
+#COPY --chown=node:node . .
+#USER node
+EXPOSE 4040
 CMD [ "node", "index.js" ]

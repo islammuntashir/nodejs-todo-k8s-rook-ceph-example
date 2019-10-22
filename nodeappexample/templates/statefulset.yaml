@@ -31,7 +31,7 @@ spec:
           protocol: TCP
         volumeMounts:
         - name: data
-          mountPath: /home/node/app/data
+          mountPath: /app/data
         
         livenessProbe:
             httpGet:

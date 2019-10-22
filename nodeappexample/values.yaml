@@ -32,7 +32,7 @@ ingress:
   #      - chart-example.local
 persistentVolume:
   enabled: true
-  path: /home/node/app/data
+  path: /app/data
   storageClass: "rook-ceph-block"
   accessModes:
     - ReadWriteOnce
