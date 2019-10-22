@@ -32,13 +32,6 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /home/node/app/data
-      initContainers:
-      - name: node-data-permission-fix
-        image: busybox
-        command: ["/bin/chmod","-R","777", "/home/node/app/data"]
-        volumeMounts:
-        - name: data
-          mountPath: /home/node/app/data
         
         livenessProbe:
             httpGet:
