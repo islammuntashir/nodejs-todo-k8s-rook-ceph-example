@@ -37,7 +37,7 @@ spec:
         image: busybox
         command: ["/bin/chmod","-R","777", "/home/node/app/data"]
         volumeMounts:
-        - name: my-do-volume
+        - name: data
           mountPath: /home/node/app/data
         
         livenessProbe:
