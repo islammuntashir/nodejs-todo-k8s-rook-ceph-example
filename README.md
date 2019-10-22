@@ -85,6 +85,7 @@ Now Change value.yaml file. and update storage class, service , images etc
       storageClass: "rook-ceph-block"
       accessModes:
       - ReadWriteOnce
+      - ReadOnlyMany
       size: 10Gi
       annotations: {}
     resources: {}
@@ -146,8 +147,109 @@ Then Create Stateful Set
     - metadata:
       name: data
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes:
+          - ReadWriteOnce
+          - ReadOnlyMany
         resources:
           requests:
             storage: 1Gi
         storageClassName: rook-ceph-block
+
+Now deploy the helm chart
+
+    helm install --name nodetodoexample ./nodeappexample
+    
+You will see the following output 
+
+    NAME:   nodetodoexample
+    LAST DEPLOYED: Tue Oct 22 16:36:42 2019
+    NAMESPACE: default
+    STATUS: DEPLOYED
+
+    RESOURCES:
+    ==> v1/Service
+    NAME                            TYPE      CLUSTER-IP     EXTERNAL-IP  PORT(S)         AGE
+    nodetodoexample-nodeappexample  NodePort  10.105.219.41  <none>       4040:30204/TCP  0s
+
+    ==> v1/StatefulSet
+    NAME                            DESIRED  CURRENT  AGE
+    nodetodoexample-nodeappexample  3        1        0s
+
+    ==> v1/Pod(related)
+    NAME                              READY  STATUS             RESTARTS  AGE
+    nodetodoexample-nodeappexample-0  0/1    ContainerCreating  0         0s
+
+
+Now the claimed PV are 
+
+    NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                           STORAGECLASS      REASON   AGE
+    pvc-d6d8c491-f4ba-11e9-a900-0ad43be7c3d2   1Gi        RWO            Delete           Bound    default/data-nodetodoexample-nodeappexample-0   rook-ceph-block            6h2m
+    pvc-df882810-f4ba-11e9-a900-0ad43be7c3d2   1Gi        RWO            Delete           Bound    default/data-nodetodoexample-nodeappexample-1   rook-ceph-block            6h2m
+    pvc-e5afd07f-f4ba-11e9-a900-0ad43be7c3d2   1Gi        RWO            Delete           Bound    default/data-nodetodoexample-nodeappexample-2   rook-ceph-block 
+
+
+if we check all PVC 
+
+    kubectl get pvc
+
+you will find 
+
+    NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+    data-nodetodoexample-nodeappexample-0   Bound    pvc-d6d8c491-f4ba-11e9-a900-0ad43be7c3d2   1Gi        RWO            rook-ceph-block   6h22m
+    data-nodetodoexample-nodeappexample-1   Bound    pvc-df882810-f4ba-11e9-a900-0ad43be7c3d2   1Gi        RWO            rook-ceph-block   6h22m
+    data-nodetodoexample-nodeappexample-2   Bound    pvc-e5afd07f-f4ba-11e9-a900-0ad43be7c3d2   1Gi        RWO            rook-ceph-block   6h21m
+
+STEP 5
+===============================================================================
+VolumeSnapshot
+
+First snapshot class for snapshotting. For ceph storage I need to deploy csi-rbdplugin-snapclass by deploying following snapshotClass.yaml
+
+    apiVersion: snapshot.storage.k8s.io/v1alpha1
+    kind: VolumeSnapshotClass
+    metadata:
+      name: csi-rbdplugin-snapclass
+    snapshotter: rook-ceph.rbd.csi.ceph.com
+    parameters:
+
+    clusterID: rook-ceph
+    csi.storage.k8s.io/snapshotter-secret-name: rook-ceph-csi
+    csi.storage.k8s.io/snapshotter-secret-namespace: rook-ceph
+
+Then I have written this volumesnapshot yaml file to snapshoot "data-nodetodoexample-nodeappexample-0" pvc
+
+    apiVersion: snapshot.storage.k8s.io/v1alpha1
+    kind: VolumeSnapshot
+    metadata:
+      name: new-snapshot-nodeexampleapp-0
+    spec:
+      snapshotClassName: csi-rbdplugin-snapclass
+      source:
+        name: data-nodetodoexample-nodeappexample-0
+        kind: PersistentVolumeClaim
+        
+After deploying I will get following volume snapshoot
+
+    kubectl get volumesnapshot
+    NAME                            AGE
+    snapshot-pvc-nodeappexample-0   5s
+    
+Now I am creating PersistentVolumeClaim from the snapshot
+
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: restore-pvc-nodeappexample-0
+    spec:
+      storageClassName: rook-ceph-block
+      dataSource:
+        name: snapshot-pvc-nodeappexample-0
+        kind: VolumeSnapshot
+        apiGroup: snapshot.storage.k8s.io
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+
+This will create reusable PersistentVolumeClaim
