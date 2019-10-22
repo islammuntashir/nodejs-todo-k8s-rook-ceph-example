@@ -45,6 +45,10 @@ STEP 3
 
 Create Docker image using following command
 
-docker build -t muntashir/node-todo-app . 
+  docker build -t muntashir/node-todo-app . 
 
+push image to dockerhub. first login with username then push the image
+
+  docker login -u muntashir
+  docker push muntashir/node-todo-app
 
