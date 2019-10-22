@@ -18,27 +18,15 @@ STEP 2
 
 Now Creating docker file using following content
 
-FROM node:10-alpine
-
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
-
-WORKDIR /home/node/app
-
-COPY package*.json ./
-
-RUN npm config set registry http://registry.npmjs.org/
-
-RUN npm install
-
-COPY . .
-
-COPY --chown=node:node . .
-
-USER node
-
-EXPOSE 8080
-
-CMD [ "node", "index.js" ]
+    FROM node:10-alpine
+    RUN mkdir -p /app/node_modules
+    WORKDIR /app
+    COPY package*.json ./
+    RUN npm config set registry http://registry.npmjs.org/
+    RUN npm install
+    COPY . .
+    EXPOSE 4040
+    CMD [ "node", "index.js" ]
 
 STEP 3
 ============================================================================
@@ -51,4 +39,61 @@ push image to dockerhub. first login with username then push the image
 
   docker login -u muntashir
   docker push muntashir/node-todo-app
+  
+ STEP 4
+ ==========================================================================
+Create new chart anmed nodeappexample using Helm.As I am working on local cluster I need to install cloud native storage orchestrato. I am working with rook/ceph here.
+I have configured storage class by following this URL
 
+https://github.com/rook/rook/blob/master/Documentation/ceph-quickstart.md
+
+The storage class looks like this
+
+    NAME              PROVISIONER          AGE
+    rook-ceph-block   ceph.rook.io/block   1d
+
+Now Change value.yaml file. and update storage class, service , images etc 
+
+replicaCount: 3
+
+image:
+  repository: muntashir/node-todo-app
+  tag: latest
+  pullPolicy: Always
+fullname: "a"
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: NodePort
+  port: 4040
+  targetPort: 4040
+  nodePort: 30100
+  
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  paths: []
+  hosts:
+    - chart-example.local
+  tls: []
+persistentVolume:
+  enabled: true
+  path: /app/data
+  storageClass: "rook-ceph-block"
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+Then Create Stateful Set 
