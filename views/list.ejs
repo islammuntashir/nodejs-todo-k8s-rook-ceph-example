@@ -1,0 +1,22 @@
+<html>
+<head>
+  <title>A To-Do List</title>
+  <link href='https://fonts.googleapis.com/css?family=Duru Sans' rel='stylesheet'>
+  <link href="/style.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Forethought</h1>
+    
+
+    <h2>All completed task till now</h2>
+    <% for(var i = 0; i < allCompleted.length; i++){ %>
+      <li><input class="checked" type="checkbox" checked><%= allCompleted[i] %> </li>
+    <% } %>
+    <p class="credit">This app made by using <a
+        href="https://medium.com/@atingenkay/creating-a-todo-app-with-node-js-express-8fa51f39b16f">this article</a>;
+      also see the <a href="https://github.com/missating/nodejs-todo">github</a>!</a>
+  </div>
+</body>
+</html>
